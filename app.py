@@ -880,7 +880,6 @@ if st.session_state.resume_result:
                 data=st.session_state.word_buffer,
                 file_name=f"{base_filename}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                type="primary",
                 use_container_width=True,
             )
     with col2:
@@ -901,7 +900,6 @@ if st.session_state.resume_result:
             data=st.session_state.cover_letter_buffer,
             file_name=f"{base_filename}_CoverLetter.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            type="primary",
             use_container_width=True,
         )
 
