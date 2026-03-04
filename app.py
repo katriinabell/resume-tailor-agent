@@ -143,7 +143,7 @@ with st.sidebar:
     st.markdown("""
     This tool uses Claude AI to analyze and tailor your resume. You provide your own API key so usage costs go directly to Anthropic (not to me).
 
-    **Cost:** ~$0.02-0.04 per resume generated.
+    **Cost:** ~$0.02-0.04 per resume, +$0.01-0.02 for cover letter.
 
     Get your key at [console.anthropic.com](https://console.anthropic.com)
     """)
@@ -168,13 +168,7 @@ with st.sidebar:
 
     **Current resume** - Upload as .docx to preserve formatting in the output.
 
-    **Qualifications file** (optional but highly recommended) - A comprehensive document with far more detail than your resume:
-    - All skills and technologies
-    - Detailed work history with specific achievements
-    - Metrics and numbers (revenue, users, %)
-    - Projects, certifications, volunteer work
-
-    This extra context helps the AI select and emphasize the most relevant experience for each job.
+    **Qualifications file** (optional but highly recommended) - A comprehensive document with far more detail than your resume. If you do not already have one, you may download and use the provided template. Providing this additional context helps the AI agent select and emphasize the most relevant experience for each job.
 
     ### 2. Add Job Description
 
