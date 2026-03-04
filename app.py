@@ -142,6 +142,10 @@ if "word_buffer" not in st.session_state:
     st.session_state.word_buffer = None
 if "original_docx_bytes" not in st.session_state:
     st.session_state.original_docx_bytes = None
+if "cover_letter_result" not in st.session_state:
+    st.session_state.cover_letter_result = None
+if "cover_letter_buffer" not in st.session_state:
+    st.session_state.cover_letter_buffer = None
 
 # API Key input (check env var or Streamlit secrets first, then allow manual entry)
 api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -595,6 +599,127 @@ Tense: present for current role, past for previous roles
         }
 
 
+def generate_cover_letter(
+    client: anthropic.Anthropic,
+    qualifications_content: str,
+    resume_content: str,
+    job_description: str,
+    filename_parts: dict,
+) -> dict:
+    """Generate a cover letter following Dale Carnegie principles."""
+
+    applicant_name = filename_parts.get("person_name", "Applicant")
+    company_name = filename_parts.get("company", "Company")
+    job_title = filename_parts.get("job_title", "Position")
+
+    prompt = f"""Write a cover letter for this job application following these strict guidelines:
+
+## Style Guide (Dale Carnegie Philosophy)
+- Focus on what the COMPANY needs, not what the applicant wants
+- Open with something specific about the company/role, NOT "I am writing to apply..."
+- Connect the applicant's achievements to the company's needs
+- Be confident but not arrogant, specific but not verbose
+- NO clichés: "passionate", "team player", "detail-oriented", "excited to apply"
+- NO hollow flattery or generic compliments
+
+## Format (Email Cover Letter)
+- NO formal header block (no address/date block) - this is an email
+- Greeting: "Dear Hiring Manager," (or hiring manager name if in job posting)
+- Body: exactly 3 paragraphs, 150-250 words total
+  - P1 (2-4 sentences): Open with company insight, bridge to your value
+  - P2 (4-6 sentences): Connect 1-2 specific achievements to their needs, with metrics
+  - P3 (2-3 sentences): Confident close, invite conversation
+- Sign-off: "Best regards," followed by name, phone, email on separate lines
+- Mention "I've attached my resume for your reference."
+
+## Applicant Info
+Name: {applicant_name}
+
+<qualifications>
+{qualifications_content if qualifications_content else "See resume below"}
+</qualifications>
+
+<resume>
+{resume_content}
+</resume>
+
+## Job Details
+Company: {company_name}
+Position: {job_title}
+
+<job_description>
+{job_description}
+</job_description>
+
+## Output
+Return JSON only:
+{{"subject_line": "Name — Job Title Application", "cover_letter": "Full cover letter text with line breaks", "greeting": "Dear Hiring Manager,", "sign_off": "Best regards,\\nFull Name\\nPhone\\nEmail"}}
+"""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=2048,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    response_text = message.content[0].text
+
+    try:
+        code_block_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', response_text)
+        if code_block_match:
+            json_str = code_block_match.group(1).strip()
+        else:
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            if json_match:
+                json_str = json_match.group()
+            else:
+                json_str = response_text
+
+        parsed = json.loads(json_str)
+        return parsed
+
+    except json.JSONDecodeError:
+        # Try to extract cover letter from response
+        return {
+            "subject_line": f"{applicant_name} — {job_title} Application",
+            "cover_letter": response_text,
+            "greeting": "Dear Hiring Manager,",
+            "sign_off": f"Best regards,\n{applicant_name}"
+        }
+
+
+def create_cover_letter_docx(cover_letter_data: dict) -> io.BytesIO:
+    """Create a Word document for the cover letter."""
+    from docx import Document
+    from docx.shared import Pt, Inches
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = Document()
+
+    # Set margins
+    for section in doc.sections:
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+
+    # Get cover letter content
+    cover_letter = cover_letter_data.get("cover_letter", "")
+
+    # Add the cover letter text
+    for line in cover_letter.split('\n'):
+        para = doc.add_paragraph(line)
+        para.style.font.name = 'Calibri'
+        para.style.font.size = Pt(11)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
 def read_uploaded_file(uploaded_file) -> tuple:
     """Read content from an uploaded file. Returns (text_content, docx_bytes_or_none, is_docx)."""
     if uploaded_file is None:
@@ -668,6 +793,12 @@ job_description_input = st.text_area(
     help="Copy and paste the job posting text"
 )
 
+# Cover letter option
+generate_cover_letter_option = st.checkbox(
+    "Also generate a tailored cover letter",
+    help="Creates a professional cover letter following Dale Carnegie principles"
+)
+
 st.markdown("---")
 
 if st.button("Generate Tailored Resume", type="primary", use_container_width=True):
@@ -732,7 +863,22 @@ if st.button("Generate Tailored Resume", type="primary", use_container_width=Tru
                         st.session_state.word_buffer = None
 
                     st.session_state.resume_result = result
-                    st.success("Resume generated!")
+
+                    # Generate cover letter if requested
+                    if generate_cover_letter_option:
+                        with st.spinner("Generating cover letter..."):
+                            cover_letter_result = generate_cover_letter(
+                                client=client,
+                                qualifications_content=qualifications_content,
+                                resume_content=resume_content,
+                                job_description=job_description,
+                                filename_parts=result.get("filename_parts", {}),
+                            )
+                            st.session_state.cover_letter_result = cover_letter_result
+                            st.session_state.cover_letter_buffer = create_cover_letter_docx(cover_letter_result)
+                    else:
+                        st.session_state.cover_letter_result = None
+                        st.session_state.cover_letter_buffer = None
 
                 except anthropic.AuthenticationError:
                     st.error("Invalid API key. Please check your Anthropic API key.")
@@ -758,13 +904,19 @@ if st.session_state.resume_result:
     base_filename = f"{clean_filename(person_name)}_{clean_filename(company)}_{clean_filename(job_title)}"
 
     # Download buttons at the top for visibility
-    st.success("Resume generated successfully!")
+    if st.session_state.cover_letter_result:
+        st.success("Resume and cover letter generated successfully!")
+    else:
+        st.success("Resume generated successfully!")
+
+    # Resume downloads
+    st.markdown("**Resume:**")
     col1, col2 = st.columns(2)
     with col1:
         if st.session_state.word_buffer:
             st.session_state.word_buffer.seek(0)
             st.download_button(
-                label="Download as Word",
+                label="Download Resume (Word)",
                 data=st.session_state.word_buffer,
                 file_name=f"{base_filename}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -773,19 +925,47 @@ if st.session_state.resume_result:
             )
     with col2:
         st.download_button(
-            label="Download as Markdown",
+            label="Download Resume (Markdown)",
             data=resume_text,
             file_name=f"{base_filename}.md",
             mime="text/markdown",
             use_container_width=True,
         )
 
-    tab1, tab2 = st.tabs(["Tailored Resume", "Changes Made"])
+    # Cover letter download
+    if st.session_state.cover_letter_result and st.session_state.cover_letter_buffer:
+        st.markdown("**Cover Letter:**")
+        st.session_state.cover_letter_buffer.seek(0)
+        st.download_button(
+            label="Download Cover Letter (Word)",
+            data=st.session_state.cover_letter_buffer,
+            file_name=f"{base_filename}_CoverLetter.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            type="primary",
+            use_container_width=True,
+        )
+
+    # Tabs for preview
+    if st.session_state.cover_letter_result:
+        tab1, tab2, tab3 = st.tabs(["Tailored Resume", "Cover Letter", "Changes Made"])
+    else:
+        tab1, tab2 = st.tabs(["Tailored Resume", "Changes Made"])
+        tab3 = None
 
     with tab1:
         st.markdown(resume_text)
 
-    with tab2:
+    if st.session_state.cover_letter_result:
+        with tab2:
+            st.markdown("**Subject Line:**")
+            st.code(st.session_state.cover_letter_result.get("subject_line", ""))
+            st.markdown("---")
+            st.markdown(st.session_state.cover_letter_result.get("cover_letter", ""))
+        changes_tab = tab3
+    else:
+        changes_tab = tab2
+
+    with changes_tab:
         st.subheader("What Was Changed and Why")
         st.markdown("Here's a breakdown of how your resume was tailored to match the job description:")
         st.markdown("---")
