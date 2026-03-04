@@ -133,7 +133,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("Resume Tailor")
-st.markdown("Upload your qualifications and resume, then paste the job description to generate a tailored resume.")
+st.markdown("Upload a qualifications document and your resume (Word format preferred), then paste in a job description. The app will align your resume to the role, generate a new Word file that preserves your original formatting, and explain every change it made — so you always know what was updated and why. Review the output carefully before sending to ensure accuracy.")
 
 # Initialize session state for results
 if "resume_result" not in st.session_state:
@@ -766,7 +766,7 @@ with col2:
     resume_file = st.file_uploader(
         "Current Resume",
         type=["txt", "md", "pdf", "docx"],
-        help="Upload as .docx to preserve formatting in the output"
+        help="Word (.docx) produces best results — formatting is preserved"
     )
 
 # Job description input
