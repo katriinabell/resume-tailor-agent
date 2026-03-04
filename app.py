@@ -156,7 +156,7 @@ with st.sidebar:
     st.markdown("""
     This tool uses Claude AI to analyze and tailor your resume. You provide your own API key so usage costs go directly to Anthropic (not to me).
 
-    **Cost:** ~$0.01-0.03 per resume generated.
+    **Cost:** ~$0.03-0.06 per resume generated.
 
     Get your key at [console.anthropic.com](https://console.anthropic.com)
     """)
