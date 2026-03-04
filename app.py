@@ -43,20 +43,6 @@ st.set_page_config(
 # Custom CSS for professional styling with soft green tones (light and dark mode compatible)
 st.markdown("""
 <style>
-    /* Import clean sans-serif font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-    /* Global font */
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    /* Headers - inherit color for dark mode compatibility */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        font-weight: 600;
-    }
-
     /* Primary button styling - soft green */
     .stButton > button[kind="primary"] {
         background-color: #4a7c59;
