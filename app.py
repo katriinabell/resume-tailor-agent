@@ -103,7 +103,7 @@ st.markdown("""
 # Display logo instead of text title
 logo_path = os.path.join(os.path.dirname(__file__), "theperfectfitlogo.png")
 if os.path.exists(logo_path):
-    st.image(logo_path, width=300)
+    st.image(logo_path, width=400)
 else:
     st.title("The Perfect Fit")
 st.subheader("Tailor your resume and cover letter")
