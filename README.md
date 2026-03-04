@@ -20,7 +20,7 @@ Get an API key at [console.anthropic.com](https://console.anthropic.com)
 ## Run Locally
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/resume-tailor-agent.git
+git clone https://github.com/katriinabell/resume-tailor-agent.git
 cd resume-tailor-agent
 
 # Install dependencies
