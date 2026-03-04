@@ -35,9 +35,8 @@ Then open http://localhost:8501 and enter your Anthropic API key in the sidebar.
 ## Web UI Features
 
 - **File upload** - Supports .txt, .md, .pdf, .docx
-- **Job URL** - Paste a link and the agent fetches the job description
-- **Direct paste** - Or paste the job description text directly
-- **Download** - Get your tailored resume as a Markdown file
+- **Job description** - Paste the job posting text directly
+- **Download** - Get your tailored resume as Word or Markdown
 
 ## Tips for Best Results
 

@@ -89,9 +89,9 @@ with st.sidebar:
 
     **Current resume** - Upload as .docx to preserve formatting in the output.
 
-    ### 2. Add Job Posting
+    ### 2. Add Job Description
 
-    Paste the URL to the job posting, or paste the description directly.
+    Copy and paste the job posting text.
 
     ### 3. Generate
 
@@ -677,19 +677,13 @@ with col2:
         help="Upload as .docx to preserve formatting in the output"
     )
 
-# Job URL input
-job_url = st.text_input(
-    "Job Posting URL",
-    placeholder="https://example.com/jobs/senior-engineer",
-    help="Link to the job posting you're applying for"
+# Job description input
+job_description_input = st.text_area(
+    "Job Description",
+    height=250,
+    placeholder="Paste the full job description here...",
+    help="Copy and paste the job posting text"
 )
-
-with st.expander("Or paste job description directly"):
-    job_text = st.text_area(
-        "Job Description",
-        height=200,
-        placeholder="Paste the full job description here..."
-    )
 
 st.markdown("---")
 
@@ -700,8 +694,8 @@ if st.button("✨ Generate Tailored Resume", type="primary", use_container_width
         st.error("Please upload your qualifications file.")
     elif not resume_file:
         st.error("Please upload your current resume.")
-    elif not job_url and not job_text:
-        st.error("Please provide a job posting URL or paste the job description.")
+    elif not job_description_input:
+        st.error("Please paste the job description.")
     else:
         qualifications_content, _, _ = read_uploaded_file(qualifications_file)
         resume_content, docx_bytes, is_docx = read_uploaded_file(resume_file)
@@ -715,15 +709,7 @@ if st.button("✨ Generate Tailored Resume", type="primary", use_container_width
             if is_docx and docx_bytes:
                 st.session_state.original_docx_bytes = docx_bytes
 
-            # Get job description
-            if job_url:
-                with st.spinner("Fetching job description from URL..."):
-                    job_description = fetch_job_description(job_url)
-                    if job_description.startswith("Error"):
-                        st.error(job_description)
-                        st.stop()
-            else:
-                job_description = job_text
+            job_description = job_description_input
 
             with st.spinner("Analyzing job requirements and tailoring your resume..."):
                 try:
