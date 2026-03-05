@@ -120,8 +120,8 @@ if os.path.exists(logo_path):
     st.image(logo_path, width=400)
 else:
     st.title("The Perfect Fit")
-st.subheader("Tailor your resume and cover letter")
-st.markdown("Upload a qualifications document and your resume (Word format preferred), then paste in a job description. The app will align your resume to the role, generate a new Word file that preserves your original formatting, and explain every change it made — so you always know what was updated and why. Review the output carefully before sending to ensure accuracy.")
+st.subheader("Tailor your resume for a specific job")
+st.markdown("Upload a qualifications document (optional) and your resume (Word format), then paste in the full job description text. The app will align your resume to the role, generate a new Word file that preserves your original formatting, and explain every change it made — so you always know what was updated and why. It will also provide an ATS keyword match score, identify skills gaps, and generate a tailored summary statement optimized for the role. Review the output carefully before sending to ensure accuracy.")
 
 # Initialize session state for results
 if "resume_result" not in st.session_state:
@@ -273,9 +273,16 @@ NEVER change: years of experience, job titles (keep EXACT original titles - neve
 CRITICAL: The candidate's job titles are THEIR titles, not the job posting's title. "Software Engineer" stays "Software Engineer" even if applying for "Senior Developer".
 CAN do: reorder bullets by relevance, rephrase bullet DESCRIPTIONS using job keywords (if truthful), adjust summary emphasis, use matching action verbs
 CAN ALSO do: If qualifications file provided, REPLACE less relevant bullet points with more relevant achievements from qualifications that better match the job. Only use facts from qualifications file.
+SUMMARY REPLACEMENT: If the resume has an existing summary/objective section, REPLACE it with a tailored 2-3 sentence summary that better highlights relevant experience for THIS specific job. Use the same paragraph index.
 BULLET LIMITS: Most recent job: 5-7 bullets. Previous jobs: 3-4 bullets max. Early career jobs: 1-3 bullets only.
-FORMATTING: Preserve EXACT original formatting - same line breaks, spacing, punctuation style, and structure. Do not add or remove blank lines.
 Tense: present for current role, past for previous roles
+
+## CRITICAL FORMATTING RULES
+- Copy the EXACT text structure from each paragraph - same capitalization, same punctuation, same separators
+- Do NOT add extra line breaks, blank lines, or spacing that wasn't in the original
+- Do NOT change bullet point symbols (•, -, *, etc.) or separator characters (|, •, -)
+- Keep the EXACT same number of paragraphs - only modify text WITHIN each paragraph
+- Preserve all whitespace patterns exactly as they appear in the original
 
 ## Additional Analysis Required
 1. ATS KEYWORD ANALYSIS: Extract important keywords/skills from job description. List which appear in the tailored resume vs which are missing. Calculate match percentage.
@@ -491,9 +498,16 @@ NEVER change: years of experience, job titles (keep EXACT original titles - neve
 CRITICAL: The candidate's job titles are THEIR titles, not the job posting's title. "Software Engineer" stays "Software Engineer" even if applying for "Senior Developer".
 CAN do: reorder bullets by relevance, rephrase bullet DESCRIPTIONS using job keywords (if truthful), adjust summary emphasis, use matching action verbs
 CAN ALSO do: If qualifications file provided, REPLACE less relevant bullet points with more relevant achievements from qualifications that better match the job. Only use facts from qualifications file.
+SUMMARY REPLACEMENT: If the resume has an existing summary/objective section, REPLACE it with a tailored 2-3 sentence summary that better highlights relevant experience for THIS specific job.
 BULLET LIMITS: Most recent job: 5-7 bullets. Previous jobs: 3-4 bullets max. Early career jobs: 1-3 bullets only.
-FORMATTING: Preserve EXACT original formatting - same line breaks, spacing, punctuation style, and structure. Do not add or remove blank lines.
 Tense: present for current role, past for previous roles
+
+## CRITICAL FORMATTING RULES
+- Copy the EXACT text structure from the original resume - same capitalization, same punctuation, same separators
+- Do NOT add extra line breaks, blank lines, or spacing that wasn't in the original
+- Do NOT change bullet point symbols (•, -, *, etc.) or separator characters (|, •, -)
+- Keep the EXACT same section order and structure
+- Preserve all whitespace patterns exactly as they appear in the original
 
 ## Additional Analysis Required
 1. ATS KEYWORD ANALYSIS: Extract important keywords/skills from job description. List which appear in the tailored resume vs which are missing. Calculate match percentage.
@@ -995,11 +1009,11 @@ if st.session_state.resume_result:
         st.subheader("Tailored Summary Statement")
         tailored_summary = result.get("tailored_summary", "")
         if tailored_summary:
-            st.markdown("Use this summary at the top of your resume for this specific application:")
+            st.markdown("This summary has been inserted into your tailored resume (replacing any existing summary):")
             st.markdown("---")
             st.markdown(f"*{tailored_summary}*")
             st.markdown("---")
-            st.info("This summary is crafted from your actual qualifications - it highlights your most relevant experience for this role.")
+            st.success("This summary is crafted from your actual qualifications and has been optimized for this specific role.")
         else:
             st.info("Tailored summary not available for this generation.")
 
