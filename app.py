@@ -277,8 +277,13 @@ BULLET LIMITS: Most recent job: 5-7 bullets. Previous jobs: 3-4 bullets max. Ear
 FORMATTING: Preserve EXACT original formatting - same line breaks, spacing, punctuation style, and structure. Do not add or remove blank lines.
 Tense: present for current role, past for previous roles
 
+## Additional Analysis Required
+1. ATS KEYWORD ANALYSIS: Extract important keywords/skills from job description. List which appear in the tailored resume vs which are missing. Calculate match percentage.
+2. SKILLS GAP: List required skills from job posting that are NOT present in qualifications/resume. Be specific.
+3. TAILORED SUMMARY: Write a 2-3 sentence professional summary tailored to THIS role. Must only use facts from the qualifications/resume - never fabricate. Focus on most relevant experience for this specific job.
+
 ## Output (JSON only)
-{{"paragraphs": [{{"index": N, "text": "..."}}], "changes_summary": [{{"section": "...", "change": "...", "reason": "..."}}], "filename_parts": {{"person_name": "FirstLast", "company": "CompanyName", "job_title": "JobTitle"}}}}
+{{"paragraphs": [{{"index": N, "text": "..."}}], "changes_summary": [{{"section": "...", "change": "...", "reason": "..."}}], "filename_parts": {{"person_name": "FirstLast", "company": "CompanyName", "job_title": "JobTitle"}}, "ats_analysis": {{"matched_keywords": ["skill1", "skill2"], "missing_keywords": ["skill3", "skill4"], "match_percentage": 75}}, "skills_gap": ["missing skill 1", "missing skill 2"], "tailored_summary": "A tailored 2-3 sentence summary..."}}}}
 """
 
     message = client.messages.create(
@@ -490,8 +495,13 @@ BULLET LIMITS: Most recent job: 5-7 bullets. Previous jobs: 3-4 bullets max. Ear
 FORMATTING: Preserve EXACT original formatting - same line breaks, spacing, punctuation style, and structure. Do not add or remove blank lines.
 Tense: present for current role, past for previous roles
 
+## Additional Analysis Required
+1. ATS KEYWORD ANALYSIS: Extract important keywords/skills from job description. List which appear in the tailored resume vs which are missing. Calculate match percentage.
+2. SKILLS GAP: List required skills from job posting that are NOT present in qualifications/resume. Be specific.
+3. TAILORED SUMMARY: Write a 2-3 sentence professional summary tailored to THIS role. Must only use facts from the qualifications/resume - never fabricate. Focus on most relevant experience for this specific job.
+
 ## Output (JSON only)
-{{"tailored_resume": "full resume text...", "changes_summary": [{{"section": "...", "change": "...", "reason": "..."}}], "filename_parts": {{"person_name": "FirstLast", "company": "CompanyName", "job_title": "JobTitle"}}}}
+{{"tailored_resume": "full resume text...", "changes_summary": [{{"section": "...", "change": "...", "reason": "..."}}], "filename_parts": {{"person_name": "FirstLast", "company": "CompanyName", "job_title": "JobTitle"}}, "ats_analysis": {{"matched_keywords": ["skill1", "skill2"], "missing_keywords": ["skill3", "skill4"], "match_percentage": 75}}, "skills_gap": ["missing skill 1", "missing skill 2"], "tailored_summary": "A tailored 2-3 sentence summary..."}}}}
 """
 
     message = client.messages.create(
@@ -909,27 +919,92 @@ if st.session_state.resume_result:
             use_container_width=True,
         )
 
-    # Tabs for preview
+    # Tabs for preview - always show analysis tabs
     if st.session_state.cover_letter_result:
-        tab1, tab2, tab3 = st.tabs(["Tailored Resume", "Cover Letter", "Changes Made"])
+        tabs = st.tabs(["Tailored Resume", "Cover Letter", "ATS Score", "Skills Gap", "Tailored Summary", "Changes Made"])
+        tab_resume, tab_cover, tab_ats, tab_skills, tab_summary, tab_changes = tabs
     else:
-        tab1, tab2 = st.tabs(["Tailored Resume", "Changes Made"])
-        tab3 = None
+        tabs = st.tabs(["Tailored Resume", "ATS Score", "Skills Gap", "Tailored Summary", "Changes Made"])
+        tab_resume, tab_ats, tab_skills, tab_summary, tab_changes = tabs
+        tab_cover = None
 
-    with tab1:
+    with tab_resume:
         st.markdown(resume_text)
 
-    if st.session_state.cover_letter_result:
-        with tab2:
+    if st.session_state.cover_letter_result and tab_cover:
+        with tab_cover:
             st.markdown("**Subject Line:**")
             st.code(st.session_state.cover_letter_result.get("subject_line", ""))
             st.markdown("---")
             st.markdown(st.session_state.cover_letter_result.get("cover_letter", ""))
-        changes_tab = tab3
-    else:
-        changes_tab = tab2
 
-    with changes_tab:
+    # ATS Score Tab
+    with tab_ats:
+        st.subheader("ATS Keyword Analysis")
+        ats_analysis = result.get("ats_analysis", {})
+        if ats_analysis:
+            match_pct = ats_analysis.get("match_percentage", 0)
+            matched = ats_analysis.get("matched_keywords", [])
+            missing = ats_analysis.get("missing_keywords", [])
+
+            # Display score with color coding
+            if match_pct >= 75:
+                st.success(f"**Keyword Match Score: {match_pct}%** - Strong match!")
+            elif match_pct >= 50:
+                st.warning(f"**Keyword Match Score: {match_pct}%** - Moderate match")
+            else:
+                st.error(f"**Keyword Match Score: {match_pct}%** - Consider adding more relevant keywords")
+
+            st.markdown("---")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**Keywords Found in Resume:**")
+                if matched:
+                    for kw in matched:
+                        st.markdown(f"- {kw}")
+                else:
+                    st.info("No keywords extracted")
+
+            with col2:
+                st.markdown("**Missing Keywords (consider adding):**")
+                if missing:
+                    for kw in missing:
+                        st.markdown(f"- {kw}")
+                else:
+                    st.success("All key terms are present!")
+        else:
+            st.info("ATS analysis not available for this generation.")
+
+    # Skills Gap Tab
+    with tab_skills:
+        st.subheader("Skills Gap Analysis")
+        skills_gap = result.get("skills_gap", [])
+        if skills_gap and len(skills_gap) > 0:
+            st.warning("The following skills from the job posting were not found in your qualifications:")
+            st.markdown("---")
+            for skill in skills_gap:
+                st.markdown(f"- {skill}")
+            st.markdown("---")
+            st.info("**Tip:** If you have these skills but didn't mention them, consider adding them to your qualifications file for future applications.")
+        else:
+            st.success("No significant skills gaps detected! Your qualifications align well with this role.")
+
+    # Tailored Summary Tab
+    with tab_summary:
+        st.subheader("Tailored Summary Statement")
+        tailored_summary = result.get("tailored_summary", "")
+        if tailored_summary:
+            st.markdown("Use this summary at the top of your resume for this specific application:")
+            st.markdown("---")
+            st.markdown(f"*{tailored_summary}*")
+            st.markdown("---")
+            st.info("This summary is crafted from your actual qualifications - it highlights your most relevant experience for this role.")
+        else:
+            st.info("Tailored summary not available for this generation.")
+
+    # Changes Made Tab
+    with tab_changes:
         st.subheader("What Was Changed and Why")
         st.markdown("Here's a breakdown of how your resume was tailored to match the job description:")
         st.markdown("---")
